@@ -1,0 +1,1238 @@
+{
+	"info": {
+		"_postman_id": "b602e0a7-a249-4d72-9e75-db18506a125c",
+		"name": "SpotifyAppTest",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "30627003"
+	},
+	"item": [
+		{
+			"name": "Get User ID",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"var jsonData = pm.response.json();\r",
+							"var ID = jsonData.id;\r",
+							"pm.collectionVariables.set(\"User_ID\", ID);\r",
+							"\r",
+							"pm.test(\"Verify that the 'type' is 'user\", function () {\r",
+							"    pm.expect(jsonData.type).to.eql(\"user\");\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify href\", function () {\r",
+							"    var url = pm.collectionVariables.get(\"Base_URL\") + \"/users/\" + ID;\r",
+							"    pm.expect(jsonData.href).to.eql(url);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify external spotify url ends with user's ID\", function () {\r",
+							"    pm.expect((jsonData.external_urls.spotify).endsWith(ID)).to.eql(true);\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{Base_URL}}/me",
+					"host": [
+						"{{Base_URL}}"
+					],
+					"path": [
+						"me"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get User ID With Wrong Access Token",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 401\", function () {\r",
+							"    pm.response.to.have.status(401);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify error status is '401'\", function () {\r",
+							"    var jsonData = pm.response.json();\r",
+							"    pm.expect(jsonData.error.status).to.eql(401);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify error message is 'Invalid access token'\", function () {\r",
+							"    var jsonData = pm.response.json();\r",
+							"    pm.expect(jsonData.error.message).to.eql(\"Invalid access token\");\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "wrongaccesstoken",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{Base_URL}}/me",
+					"host": [
+						"{{Base_URL}}"
+					],
+					"path": [
+						"me"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create Playlist",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();\r",
+							"var ID = jsonData.id;\r",
+							"pm.collectionVariables.set(\"Playlist_ID\", ID);\r",
+							"\r",
+							"pm.test(\"Successful POST request\", function () {\r",
+							"    pm.expect(pm.response.code).to.be.oneOf([201, 202]);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify playlist name\", function () {\r",
+							"    pm.expect(jsonData.name).to.eql(pm.environment.get(\"Playlist_Name\"));\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify playlist description\", function () {\r",
+							"    pm.expect(jsonData.description).to.eql(pm.environment.get(\"Playlist_Description\"));\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify playlist type\", function () {\r",
+							"    pm.expect(jsonData.type).to.eql(\"playlist\");\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify playlist visibility\", function () {\r",
+							"    var requestBody = JSON.parse(pm.request.body.raw);\r",
+							"    pm.expect(jsonData.public).to.eql(requestBody.public);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify playlist href\", function () {\r",
+							"    var url = pm.collectionVariables.get(\"Base_URL\") + \"/playlists/\" + ID;\r",
+							"    pm.expect(jsonData.href).to.eql(url);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify external spotify url ends with playlist's ID\", function () {\r",
+							"    pm.expect((jsonData.external_urls.spotify).endsWith(ID)).to.eql(true);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify tracks limit is 100\", function () {\r",
+							"    pm.expect(jsonData.tracks.limit).to.eql(100);\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"name\": \"{{Playlist_Name}}\",\r\n    \"description\": \"{{Playlist_Description}}\",\r\n    \"public\": false\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{Base_URL}}/users/{{User_ID}}/playlists",
+					"host": [
+						"{{Base_URL}}"
+					],
+					"path": [
+						"users",
+						"{{User_ID}}",
+						"playlists"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Playlists",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();\r",
+							"\r",
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify limit is 50\", function () {\r",
+							"    pm.expect(jsonData.limit).to.eql(50);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify total is 1\", function () {\r",
+							"    pm.expect(jsonData.total).to.eql(1);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify that one item only is returned\", function () {\r",
+							"    pm.expect((jsonData.items).length).to.eql(1);\r",
+							"});\r",
+							"\r",
+							"// Verify Playlist data\r",
+							"pm.test(\"Verify playlist id\", function () {\r",
+							"    pm.expect(jsonData.items[0].id).to.eql(pm.collectionVariables.get(\"Playlist_ID\"));\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify playlist name\", function () {\r",
+							"    pm.expect(jsonData.items[0].name).to.eql(pm.environment.get(\"Playlist_Name\"));\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify playlist description\", function () {\r",
+							"    pm.expect(jsonData.items[0].description).to.eql(pm.environment.get(\"Playlist_Description\"));\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify playlist type\", function () {\r",
+							"    pm.expect(jsonData.items[0].type).to.eql(\"playlist\");\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify playlist href\", function () {\r",
+							"    var url = pm.collectionVariables.get(\"Base_URL\") + \"/playlists/\" + pm.collectionVariables.get(\"Playlist_ID\");\r",
+							"    pm.expect(jsonData.items[0].href).to.eql(url);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify external spotify url ends with playlist's ID\", function () {\r",
+							"    pm.expect((jsonData.items[0].external_urls.spotify).endsWith(pm.collectionVariables.get(\"Playlist_ID\"))).to.eql(true);\r",
+							"});\r",
+							"\r",
+							"\r",
+							"pm.test(`Verify that the owner's id is ${pm.collectionVariables.get(\"User_ID\")}`, function () {\r",
+							"    pm.expect(jsonData.items[0].owner.id).to.eql(pm.collectionVariables.get(\"User_ID\"));\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify that the owner's 'type' is 'user\", function () {\r",
+							"    pm.expect(jsonData.items[0].owner.type).to.eql(\"user\");\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify owner's href\", function () {\r",
+							"    var url = pm.collectionVariables.get(\"Base_URL\") + \"/users/\" + pm.collectionVariables.get(\"User_ID\");\r",
+							"    pm.expect(jsonData.items[0].owner.href).to.eql(url);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify owner's external spotify url ends with user's ID\", function () {\r",
+							"    pm.expect((jsonData.items[0].owner.external_urls.spotify).endsWith(pm.collectionVariables.get(\"User_ID\"))).to.eql(true);\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{Base_URL}}/me/playlists",
+					"host": [
+						"{{Base_URL}}"
+					],
+					"path": [
+						"me",
+						"playlists"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Update Playlist Info",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"name\": \"{{Updated_Playlist_Name}}\",\r\n    \"description\": \"{{Updated_Playlist_Description}}\",\r\n    \"public\": false\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{Base_URL}}/playlists/{{Playlist_ID}}",
+					"host": [
+						"{{Base_URL}}"
+					],
+					"path": [
+						"playlists",
+						"{{Playlist_ID}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Update Playlist Info Without Access",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 403\", function () {\r",
+							"    pm.response.to.have.status(403);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify error status is '403'\", function () {\r",
+							"    var jsonData = pm.response.json();\r",
+							"    pm.expect(jsonData.error.status).to.eql(403);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify error message is 'Not allowed'\", function () {\r",
+							"    var jsonData = pm.response.json();\r",
+							"    pm.expect(jsonData.error.message).to.eql(\"Not allowed\");\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"name\": \"{{Updated_Playlist_Name}}\",\r\n    \"description\": \"{{Updated_Playlist_Description}}\",\r\n    \"public\": false\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{Base_URL}}/playlists/3cEYpjA9oz9GiPac4AsH4n",
+					"host": [
+						"{{Base_URL}}"
+					],
+					"path": [
+						"playlists",
+						"3cEYpjA9oz9GiPac4AsH4n"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Verify Playlist Info Update",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"setTimeout(function(){}, 60000);"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();\r",
+							"\r",
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify playlist id\", function () {\r",
+							"    pm.expect(jsonData.id).to.eql(pm.collectionVariables.get(\"Playlist_ID\"));\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify Updated Name\", function () {\r",
+							"    pm.expect(jsonData.name).to.eql(pm.environment.get(\"Updated_Playlist_Name\"));\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify Updated Description\", function () {\r",
+							"    pm.expect(jsonData.description).to.eql(pm.environment.get(\"Updated_Playlist_Description\"));\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify playlist type\", function () {\r",
+							"    pm.expect(jsonData.type).to.eql(\"playlist\");\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify playlist href\", function () {\r",
+							"    var url = pm.collectionVariables.get(\"Base_URL\") + \"/playlists/\" + pm.collectionVariables.get(\"Playlist_ID\");\r",
+							"    pm.expect(jsonData.href).to.eql(url);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify external spotify url ends with playlist's ID\", function () {\r",
+							"    pm.expect((jsonData.external_urls.spotify).endsWith(pm.collectionVariables.get(\"Playlist_ID\"))).to.eql(true);\r",
+							"});\r",
+							"\r",
+							"//Verify owner's data\r",
+							"pm.test(`Verify that the owner's id is ${pm.collectionVariables.get(\"User_ID\")}`, function () {\r",
+							"    pm.expect(jsonData.owner.id).to.eql(pm.collectionVariables.get(\"User_ID\"));\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify that the owner's 'type' is 'user\", function () {\r",
+							"    pm.expect(jsonData.owner.type).to.eql(\"user\");\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify owner's href\", function () {\r",
+							"    var url = pm.collectionVariables.get(\"Base_URL\") + \"/users/\" + pm.collectionVariables.get(\"User_ID\");\r",
+							"    pm.expect(jsonData.owner.href).to.eql(url);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify owner's external spotify url ends with user's ID\", function () {\r",
+							"    pm.expect((jsonData.owner.external_urls.spotify).endsWith(pm.collectionVariables.get(\"User_ID\"))).to.eql(true);\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{Base_URL}}/playlists/{{Playlist_ID}}",
+					"host": [
+						"{{Base_URL}}"
+					],
+					"path": [
+						"playlists",
+						"{{Playlist_ID}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Search For Item",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();",
+							"",
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Verify the limit\", function () {",
+							"    pm.expect(jsonData.tracks.limit).to.eql(parseInt(pm.request.url.query.get(\"limit\")));",
+							"});",
+							"",
+							"pm.test(`Verify that ${pm.request.url.query.get('limit')} items only is returned`, function () {",
+							"    pm.expect((jsonData.tracks.items).length).to.eql(parseInt(pm.request.url.query.get(\"limit\")));",
+							"});",
+							"",
+							"pm.test(\"Verify Album type\", function () {",
+							"    pm.expect(jsonData.tracks.items[0].album.album_type).to.eql(\"single\");",
+							"});",
+							"",
+							"pm.test(\"Verify Album Artist\", function () {",
+							"    pm.expect(jsonData.tracks.items[0].album.artists[0].name).to.eql(\"Armin van Buuren\");",
+							"});",
+							"",
+							"pm.test(\"Verify Album Artist type\", function () {",
+							"    pm.expect(jsonData.tracks.items[0].album.artists[0].type).to.eql(\"artist\");",
+							"});",
+							"",
+							"pm.test(\"Verify Track Artist\", function () {",
+							"    pm.expect(jsonData.tracks.items[0].artists[0].name).to.eql(\"Armin van Buuren\");",
+							"});",
+							"",
+							"pm.test(\"Verify Track name\", function () {",
+							"    pm.expect(jsonData.tracks.items[0].name).to.contain(\"I Live For That Energy\");",
+							"});",
+							"",
+							"//Extract Track URI",
+							"pm.environment.set(\"Track_URI1\", jsonData.tracks.items[0].uri);",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{Base_URL}}/search?q=I Live for That Energy&type=track&limit=5",
+					"host": [
+						"{{Base_URL}}"
+					],
+					"path": [
+						"search"
+					],
+					"query": [
+						{
+							"key": "q",
+							"value": "I Live for That Energy"
+						},
+						{
+							"key": "type",
+							"value": "track"
+						},
+						{
+							"key": "limit",
+							"value": "5"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Search For Item with default limit",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();",
+							"",
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Verify default limit\", function () {",
+							"    pm.expect(jsonData.tracks.limit).to.eql(20);",
+							"});",
+							"",
+							"pm.test(`Verify that 20 items only is returned`, function () {",
+							"    pm.expect((jsonData.tracks.items).length).to.eql(20);",
+							"});",
+							"",
+							"pm.test(\"Verify Album type\", function () {",
+							"    pm.expect(jsonData.tracks.items[1].album.album_type).to.eql(\"album\");",
+							"});",
+							"",
+							"pm.test(\"Verify Album name\", function () {",
+							"    pm.expect(jsonData.tracks.items[1].album.name).to.eql(\"The Only Road\");",
+							"});",
+							"",
+							"pm.test(\"Verify Album's 1st Artist\", function () {",
+							"    pm.expect(jsonData.tracks.items[1].album.artists[0].name).to.eql(\"Gabriel & Dresden\");",
+							"});",
+							"",
+							"pm.test(\"Verify Album's 2nd Artist\", function () {",
+							"    pm.expect(jsonData.tracks.items[1].album.artists[1].name).to.eql(\"Sub Teal\");",
+							"});",
+							"",
+							"pm.test(\"Verify Album's 1st Artist type\", function () {",
+							"    pm.expect(jsonData.tracks.items[1].album.artists[0].type).to.eql(\"artist\");",
+							"});",
+							"",
+							"pm.test(\"Verify Album's 1st Artist type\", function () {",
+							"    pm.expect(jsonData.tracks.items[1].album.artists[1].type).to.eql(\"artist\");",
+							"});",
+							"",
+							"pm.test(\"Verify Track's 1st Artist\", function () {",
+							"    pm.expect(jsonData.tracks.items[1].artists[0].name).to.eql(\"Gabriel & Dresden\");",
+							"});",
+							"",
+							"pm.test(\"Verify Track's 2nd Artist\", function () {",
+							"    pm.expect(jsonData.tracks.items[1].artists[1].name).to.eql(\"Sub Teal\");",
+							"});",
+							"",
+							"pm.test(\"Verify Track name\", function () {",
+							"    pm.expect(jsonData.tracks.items[1].name).to.eql(\"Only Road\");",
+							"});",
+							"",
+							"//Extract Track URI",
+							"pm.environment.set(\"Track_URI2\", jsonData.tracks.items[1].uri);",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{Base_URL}}/search?q=Gabriel and dresden only road&type=track",
+					"host": [
+						"{{Base_URL}}"
+					],
+					"path": [
+						"search"
+					],
+					"query": [
+						{
+							"key": "q",
+							"value": "Gabriel and dresden only road"
+						},
+						{
+							"key": "type",
+							"value": "track"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Search For Item In Specific Market",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();",
+							"",
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Verify the limit\", function () {",
+							"    pm.expect(jsonData.tracks.limit).to.eql(parseInt(pm.request.url.query.get(\"limit\")));",
+							"});",
+							"",
+							"pm.test(`Verify that ${pm.request.url.query.get('limit')} items only is returned`, function () {",
+							"    pm.expect((jsonData.tracks.items).length).to.eql(parseInt(pm.request.url.query.get(\"limit\")));",
+							"});",
+							"",
+							"pm.test(`Verify that href contains the ${pm.request.url.query.get('market')} market`, function () {",
+							"    pm.expect(jsonData.tracks.href).to.contain(pm.request.url.query.get('market'));",
+							"});",
+							"",
+							"pm.test(\"Verify Album name\", function () {",
+							"    pm.expect(jsonData.tracks.items[0].album.name).to.eql(\"Blueprint Album Sampler\");",
+							"});",
+							"",
+							"pm.test(\"Verify Album type\", function () {",
+							"    pm.expect(jsonData.tracks.items[0].album.album_type).to.eql(\"single\");",
+							"});",
+							"",
+							"pm.test(\"Verify Album Artist\", function () {",
+							"    pm.expect(jsonData.tracks.items[0].album.artists[0].name).to.eql(\"Ferry Corsten\");",
+							"});",
+							"",
+							"pm.test(\"Verify Album Artist type\", function () {",
+							"    pm.expect(jsonData.tracks.items[0].album.artists[0].type).to.eql(\"artist\");",
+							"});",
+							"",
+							"pm.test(\"Verify Track Artist\", function () {",
+							"    pm.expect(jsonData.tracks.items[0].artists[0].name).to.eql(\"Ferry Corsten\");",
+							"});",
+							"",
+							"pm.test(\"Verify Track name\", function () {",
+							"    pm.expect(jsonData.tracks.items[0].name).to.contain(\"Venera [Vee's Theme]\");",
+							"});",
+							"",
+							"//Extract Track URI",
+							"pm.environment.set(\"Track_URI3\", jsonData.tracks.items[0].uri);",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{Base_URL}}/search?q=Venera Blueprint&type=track&limit=3&market=EG",
+					"host": [
+						"{{Base_URL}}"
+					],
+					"path": [
+						"search"
+					],
+					"query": [
+						{
+							"key": "q",
+							"value": "Venera Blueprint"
+						},
+						{
+							"key": "type",
+							"value": "track"
+						},
+						{
+							"key": "limit",
+							"value": "3"
+						},
+						{
+							"key": "market",
+							"value": "EG"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Add Items To Playlist",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();\r",
+							"\r",
+							"pm.test(\"Successful POST request\", function () {\r",
+							"    pm.expect(pm.response.code).to.be.oneOf([200, 201, 202]);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify the response contains the snaphsot ID\", function () {\r",
+							"    pm.expect(jsonData.snapshot_id).to.not.eql(null);\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"uris\": [\r\n        \"{{Track_URI1}}\",\r\n        \"{{Track_URI2}}\",\r\n        \"{{Track_URI3}}\"\r\n    ],\r\n    \"position\": 0\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{Base_URL}}/users/{{User_ID}}/playlists/{{Playlist_ID}}/tracks",
+					"host": [
+						"{{Base_URL}}"
+					],
+					"path": [
+						"users",
+						"{{User_ID}}",
+						"playlists",
+						"{{Playlist_ID}}",
+						"tracks"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Playlist Items To Verify Addition",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();\r",
+							"\r",
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Varify playlist ID in href\", function () {\r",
+							"    pm.expect((jsonData.href).startsWith(pm.collectionVariables.get(\"Base_URL\") + \"/playlists/\" + pm.collectionVariables.get(\"Playlist_ID\"))).to.eql(true);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify that the playlist contains 3 Tracks\", function () {\r",
+							"    pm.expect(jsonData.items.length).to.eql(3);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify playlist's total\", function () {\r",
+							"   pm.expect(jsonData.total).to.eql(3);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify defualt limit is 100\", function () {\r",
+							"    pm.expect(jsonData.limit).to.eql(100);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify user ID\", function () {\r",
+							"   pm.expect(jsonData.items[0].added_by.id).to.eql(pm.collectionVariables.get(\"User_ID\"));\r",
+							"});\r",
+							"\r",
+							"//Verify 1st Track Info\r",
+							"pm.test(\"Verify 1st track's artist\", function () {\r",
+							"    pm.expect(jsonData.items[0].track.artists[0].name).to.eql(\"Armin van Buuren\");\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify 1st track's name\", function () {\r",
+							"    pm.expect(jsonData.items[0].track.name).to.contain(\"I Live For That Energy\");\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify 1st track's URI\", function () {\r",
+							"    pm.expect(jsonData.items[0].track.uri).to.contain(pm.environment.get(\"Track_URI1\"));\r",
+							"});\r",
+							"\r",
+							"//Verify 2nd Track Info\r",
+							"pm.test(\"Verify 2nd track's artists\", function () {\r",
+							"    pm.expect(jsonData.items[1].track.artists[0].name).to.eql(\"Gabriel & Dresden\");\r",
+							"    pm.expect(jsonData.items[1].track.artists[1].name).to.eql(\"Sub Teal\");\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify 2nd track's name\", function () {\r",
+							"    pm.expect(jsonData.items[1].track.name).to.contain(\"Only Road\");\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify 2nd track's URI\", function () {\r",
+							"    pm.expect(jsonData.items[1].track.uri).to.contain(pm.environment.get(\"Track_URI2\"));\r",
+							"});\r",
+							"\r",
+							"//Verify 3rd Track Info\r",
+							"pm.test(\"Verify 3rd track's artists\", function () {\r",
+							"    pm.expect(jsonData.items[2].track.artists[0].name).to.eql(\"Ferry Corsten\");\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify 3rd track's name\", function () {\r",
+							"    pm.expect(jsonData.items[2].track.name).to.contain(\"Venera [Vee's Theme]\",);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify 3rd track's URI\", function () {\r",
+							"    pm.expect(jsonData.items[2].track.uri).to.contain(pm.environment.get(\"Track_URI3\"));\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{Base_URL}}/users/{{User_ID}}/playlists/{{Playlist_ID}}/tracks",
+					"host": [
+						"{{Base_URL}}"
+					],
+					"path": [
+						"users",
+						"{{User_ID}}",
+						"playlists",
+						"{{Playlist_ID}}",
+						"tracks"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete Item From Playlist",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();\r",
+							"\r",
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify the response contains the snaphsot ID\", function () {\r",
+							"    pm.expect(jsonData.snapshot_id).to.not.eql(null);\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"tracks\": [\r\n        {\r\n            \"uri\": \"{{Track_URI1}}\"\r\n        }\r\n    ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{Base_URL}}/users/{{User_ID}}/playlists/{{Playlist_ID}}/tracks",
+					"host": [
+						"{{Base_URL}}"
+					],
+					"path": [
+						"users",
+						"{{User_ID}}",
+						"playlists",
+						"{{Playlist_ID}}",
+						"tracks"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Playlist Items To Verify First Deletion",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();\r",
+							"\r",
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Varify playlist ID in href\", function () {\r",
+							"    pm.expect((jsonData.href).startsWith(pm.collectionVariables.get(\"Base_URL\") + \"/playlists/\" + pm.collectionVariables.get(\"Playlist_ID\"))).to.eql(true);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify that the playlist contains 2 Tracks\", function () {\r",
+							"    pm.expect(jsonData.items.length).to.eql(2);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify playlist's total\", function () {\r",
+							"   pm.expect(jsonData.total).to.eql(2);\r",
+							"});\r",
+							"\r",
+							"pm.test(`Verify the limit is ${parseInt(pm.request.url.query.get(\"limit\"))}`, function () {\r",
+							"    pm.expect(jsonData.limit).to.eql(parseInt(pm.request.url.query.get(\"limit\")));\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify user ID\", function () {\r",
+							"   pm.expect(jsonData.items[0].added_by.id).to.eql(pm.collectionVariables.get(\"User_ID\"));\r",
+							"});\r",
+							"\r",
+							"//Verify 1st Track Info\r",
+							"pm.test(\"Verify 1st track's artists(Was the 2nd track before deletion)\", function () {\r",
+							"    pm.expect(jsonData.items[0].track.artists[0].name).to.eql(\"Gabriel & Dresden\");\r",
+							"    pm.expect(jsonData.items[0].track.artists[1].name).to.eql(\"Sub Teal\");\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify 1st track's name\", function () {\r",
+							"    pm.expect(jsonData.items[0].track.name).to.contain(\"Only Road\");\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify 1st track's URI\", function () {\r",
+							"    pm.expect(jsonData.items[0].track.uri).to.contain(pm.environment.get(\"Track_URI2\"));\r",
+							"});\r",
+							"\r",
+							"//Verify 2nd Track Info\r",
+							"pm.test(\"Verify 2nd track's artists (Was the 3rd track before deletion)\", function () {\r",
+							"    pm.expect(jsonData.items[1].track.artists[0].name).to.eql(\"Ferry Corsten\");\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify 2nd track's name\", function () {\r",
+							"    pm.expect(jsonData.items[1].track.name).to.contain(\"Venera [Vee's Theme]\",);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify 2nd track's URI\", function () {\r",
+							"    pm.expect(jsonData.items[1].track.uri).to.contain(pm.environment.get(\"Track_URI3\"));\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{Base_URL}}/users/{{User_ID}}/playlists/{{Playlist_ID}}/tracks?limit=10",
+					"host": [
+						"{{Base_URL}}"
+					],
+					"path": [
+						"users",
+						"{{User_ID}}",
+						"playlists",
+						"{{Playlist_ID}}",
+						"tracks"
+					],
+					"query": [
+						{
+							"key": "limit",
+							"value": "10"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete Multiple Items",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();\r",
+							"\r",
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify the response contains the snaphsot ID\", function () {\r",
+							"    pm.expect(jsonData.snapshot_id).to.not.eql(null);\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"tracks\": [\r\n        {\r\n            \"uri\": \"{{Track_URI2}}\"\r\n        },\r\n        {\r\n             \"uri\": \"{{Track_URI3}}\"\r\n        }\r\n    ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{Base_URL}}/users/{{User_ID}}/playlists/{{Playlist_ID}}/tracks",
+					"host": [
+						"{{Base_URL}}"
+					],
+					"path": [
+						"users",
+						"{{User_ID}}",
+						"playlists",
+						"{{Playlist_ID}}",
+						"tracks"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Playlist Items To Verify Deletion",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();\r",
+							"\r",
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Varify playlist ID in href\", function () {\r",
+							"    pm.expect((jsonData.href).startsWith(pm.collectionVariables.get(\"Base_URL\") + \"/playlists/\" + pm.collectionVariables.get(\"Playlist_ID\"))).to.eql(true);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Verify that the playlist is empty\", function () {\r",
+							"    pm.expect(jsonData.items.length).to.eql(0);\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{Base_URL}}/users/{{User_ID}}/playlists/{{Playlist_ID}}/tracks",
+					"host": [
+						"{{Base_URL}}"
+					],
+					"path": [
+						"users",
+						"{{User_ID}}",
+						"playlists",
+						"{{Playlist_ID}}",
+						"tracks"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"auth": {
+		"type": "oauth2",
+		"oauth2": [
+			{
+				"key": "tokenType",
+				"value": "",
+				"type": "string"
+			},
+			{
+				"key": "accessToken",
+				"value": "",
+				"type": "string"
+			},
+			{
+				"key": "client_authentication",
+				"value": "header",
+				"type": "string"
+			},
+			{
+				"key": "tokenName",
+				"value": "Spotify_Access_Token",
+				"type": "string"
+			},
+			{
+				"key": "scope",
+				"value": "playlist-read-private playlist-read-collaborative playlist-modify-private playlist-modify-public",
+				"type": "string"
+			},
+			{
+				"key": "state",
+				"value": "44fFs29kd09",
+				"type": "string"
+			},
+			{
+				"key": "accessTokenUrl",
+				"value": "https://accounts.spotify.com/api/token",
+				"type": "string"
+			},
+			{
+				"key": "authUrl",
+				"value": "https://accounts.spotify.com/authorize",
+				"type": "string"
+			},
+			{
+				"key": "clientSecret",
+				"value": "{{Client_Secret}}",
+				"type": "string"
+			},
+			{
+				"key": "clientId",
+				"value": "{{Client_ID}}",
+				"type": "string"
+			},
+			{
+				"key": "redirect_uri",
+				"value": "https://localhost:6060",
+				"type": "string"
+			},
+			{
+				"key": "addTokenTo",
+				"value": "header",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "Base_URL",
+			"value": "https://api.spotify.com/v1",
+			"type": "string"
+		},
+		{
+			"key": "User_ID",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "Playlist_ID",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
